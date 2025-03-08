@@ -6,6 +6,7 @@ from typing import cast
 import pytest
 
 from rago.generation import (
+    CohereGen,
     DeepSeekGen,
     GeminiGen,
     HuggingFaceGen,
@@ -24,6 +25,7 @@ API_MAP = {
     OpenAIGen: 'api_key_openai',
     HuggingFaceGen: 'api_key_hugging_face',
     LlamaGen: 'api_key_hugging_face',
+    CohereGen: 'api_key_cohere',
 }
 
 gen_models = [
@@ -57,6 +59,21 @@ gen_models = [
             device='auto',
         ),
     ),
+    partial(
+        CohereGen,
+        **dict(
+            model_name='command-r',
+            api_key='your_cohere_api_key',  # Ensure you replace this with your actual API key
+            temperature=0.7,
+            output_max_length=500,
+            api_params={
+                'p': 0.75,
+                'k': 0,
+                'frequency_penalty': 0.0,
+                'presence_penalty': 0.0,
+            },
+        ),
+    ),
 ]
 
 
@@ -67,6 +84,7 @@ def test_generation_simple_output(
     api_key_openai: str,
     api_key_gemini: str,
     api_key_hugging_face: str,
+    api_key_cohere: str,  # Added Cohere API Key
     partial_model: partial,
 ) -> None:
     """Test RAG pipeline with model generation."""
@@ -116,16 +134,17 @@ def test_generation_structure_output(
     api_key_openai: str,
     api_key_gemini: str,
     api_key_hugging_face: str,
+    api_key_cohere: str,  # Added Cohere API Key
     animals_data: list[str],
     question: str,
     partial_model: partial,
     expected_answer: tuple[str],
 ) -> None:
-    """Test Model Generation with structure output."""
+    """Test Model Generation with structured output."""
     model_class = partial_model.func
 
     # Skip structured output for models that don't support it
-    if issubclass(model_class, (HuggingFaceGen, LlamaGen, DeepSeekGen)):
+    if issubclass(model_class, (HuggingFaceGen, LlamaGen, DeepSeekGen, CohereGen)):
         pytest.skip(f"{model_class} doesn't support structured output.")
 
     api_key_name: str = API_MAP.get(model_class, '')
